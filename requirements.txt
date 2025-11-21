@@ -28,3 +28,6 @@ opentelemetry-sdk
 opentelemetry-exporter-otlp
 rq
 redis
+pytest
+pytest-asyncio
+apscheduler

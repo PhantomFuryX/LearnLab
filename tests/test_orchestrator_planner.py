@@ -26,14 +26,14 @@ async def test_automation_planner_toolcalls(monkeypatch):
 
     # Monkeypatch LLM plan
     async def fake_generate(self, prompt, *args, **kwargs):
-        if "automation" in prompt.lower() and "planner" in prompt.lower():
+        if "automation" in prompt.lower() and "plan" in prompt.lower():
              # Return automation plan
              plan = {"actions": [{"type": "n8n", "args": {"action": "deploy", "data": {"env": "stage"}}}]}
              return {"choices": [{"text": json.dumps(plan)}]}
         # Return automation report
         return {"choices": [{"text": "Report: deployed"}]}
-        
-    monkeypatch.setattr(type(o.llm), "generate", fake_generate, raising=False)
+
+    monkeypatch.setattr(o.llm, "generate", fake_generate, raising=False)
 
     # Monkeypatch tools
     def fake_get(name: str):
@@ -56,7 +56,7 @@ async def test_integration_planner_toolcalls(monkeypatch):
     o.advanced = True
 
     async def fake_generate(self, prompt, *args, **kwargs):
-        if "integration" in prompt.lower() and "planner" in prompt.lower():
+        if "integration" in prompt.lower() and "plan" in prompt.lower():
              plan = {"actions": [{"type": "web_fetch", "args": {"url": "https://example.com"}}]}
              return {"choices": [{"text": json.dumps(plan)}]}
         return {"choices": [{"text": "Summary: fetched"}]}
