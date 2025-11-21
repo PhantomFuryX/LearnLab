@@ -26,7 +26,7 @@ async def test_automation_planner_toolcalls(monkeypatch):
     o._graph = None  # Force linear execution for testing
 
     # Monkeypatch LLM plan
-    async def fake_generate(self, prompt, *args, **kwargs):
+    async def fake_generate(prompt, *args, **kwargs):
         if "automation" in prompt.lower() and "plan" in prompt.lower():
              # Return automation plan
              plan = {"actions": [{"type": "n8n", "args": {"action": "deploy", "data": {"env": "stage"}}}]}
