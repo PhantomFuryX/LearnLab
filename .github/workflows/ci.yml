@@ -1,0 +1,72 @@
+name: LearnLab CI
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  backend-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+
+    services:
+      mongodb:
+        image: mongo:latest
+        ports:
+          - 27017:27017
+      redis:
+        image: redis:latest
+        ports:
+          - 6379:6379
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        pip install pytest httpx pytest-asyncio
+
+    - name: Run tests
+      run: |
+        # Running tests that don't require complex external API keys
+        # We skip integration tests that might need real OpenAI keys if not mocked
+        pytest ../tests -m "not integration" -v
+      env:
+        MONGO_URI: mongodb://localhost:27017
+        REDIS_URL: redis://localhost:6379/0
+        JWT_SECRET: test_secret
+        AUTH_REQUIRED: "false"
+        OPENAI_API_KEY: "mock-key" # Mocks should handle this
+
+  frontend-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend-vite
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend-vite/package-lock.json
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build
+      run: npm run build
