@@ -31,3 +31,4 @@ redis
 pytest
 pytest-asyncio
 apscheduler
+python-multipart
