@@ -38,8 +38,10 @@ def test_agents_stream_sse(monkeypatch):
     monkeypatch.setattr(Orchestrator, "stream", fake_stream)
 
     with client.stream("POST", "/agents/stream", json={"session_id": "s", "message": "hi"}) as r:
+        # Read response to ensure streaming content is consumed
+        chunks = list(r.iter_text())
+        text = "".join(chunks)
         assert r.status_code == 200
-        text = r.text
         assert "event: step" in text
         assert "token" in text
         assert "done" in text

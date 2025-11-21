@@ -78,8 +78,9 @@ def test_chat_ask_stream_sse(monkeypatch):
     monkeypatch.setattr(Orchestrator, 'stream', fake_stream)
 
     with client.stream("POST", "/chat/ask_stream", json={"prompt": "hi"}) as r:
+        chunks = list(r.iter_text())
+        text = "".join(chunks)
         assert r.status_code == 200
-        text = r.text
         assert "event: step" in text
         assert "event: token" in text
-        assert text.strip().endswith("event: done\ndata: \n")
+        assert text.strip().endswith("event: done\ndata:")

@@ -26,8 +26,13 @@ async def test_automation_planner_toolcalls(monkeypatch):
 
     # Monkeypatch LLM plan
     async def fake_generate(self, prompt, *args, **kwargs):
-        plan = {"actions": [{"type": "n8n", "args": {"action": "deploy", "data": {"env": "stage"}}}]}
-        return {"choices": [{"text": json.dumps(plan)}]}
+        if "automation" in prompt.lower() and "planner" in prompt.lower():
+             # Return automation plan
+             plan = {"actions": [{"type": "n8n", "args": {"action": "deploy", "data": {"env": "stage"}}}]}
+             return {"choices": [{"text": json.dumps(plan)}]}
+        # Return automation report
+        return {"choices": [{"text": "Report: deployed"}]}
+        
     monkeypatch.setattr(type(o.llm), "generate", fake_generate, raising=False)
 
     # Monkeypatch tools
@@ -36,9 +41,12 @@ async def test_automation_planner_toolcalls(monkeypatch):
     monkeypatch.setattr(base_tools.ToolRegistry, "get", staticmethod(fake_get))
 
     s = await o.run({"session_id": "s", "message": "deploy app", "preferred_agent": "automation"})
-    assert any(step["name"] == "automation_plan" for step in s.get("steps", []))
-    assert any(step["name"] == "automation_report" for step in s.get("steps", []))
-    assert s.get("result")
+    
+    # Check steps list for presence of plan and report
+    step_names = [step["name"] for step in s.get("steps", [])]
+    assert "automation_plan" in step_names
+    assert "automation_report" in step_names
+    assert s.get("result") == "Report: deployed"
 
 @pytest.mark.asyncio
 async def test_integration_planner_toolcalls(monkeypatch):
@@ -48,8 +56,11 @@ async def test_integration_planner_toolcalls(monkeypatch):
     o.advanced = True
 
     async def fake_generate(self, prompt, *args, **kwargs):
-        plan = {"actions": [{"type": "web_fetch", "args": {"url": "https://example.com"}}]}
-        return {"choices": [{"text": json.dumps(plan)}]}
+        if "integration" in prompt.lower() and "planner" in prompt.lower():
+             plan = {"actions": [{"type": "web_fetch", "args": {"url": "https://example.com"}}]}
+             return {"choices": [{"text": json.dumps(plan)}]}
+        return {"choices": [{"text": "Summary: fetched"}]}
+        
     monkeypatch.setattr(type(o.llm), "generate", fake_generate, raising=False)
 
     def fake_get(name: str):
@@ -57,6 +68,8 @@ async def test_integration_planner_toolcalls(monkeypatch):
     monkeypatch.setattr(base_tools.ToolRegistry, "get", staticmethod(fake_get))
 
     s = await o.run({"session_id": "s", "message": "fetch data", "preferred_agent": "integration"})
-    assert any(step["name"] == "integration_plan" for step in s.get("steps", []))
-    assert any(step["name"] == "integration_report" for step in s.get("steps", []))
-    assert s.get("result")
+    
+    step_names = [step["name"] for step in s.get("steps", [])]
+    assert "integration_plan" in step_names
+    assert "integration_report" in step_names
+    assert s.get("result") == "Summary: fetched"
