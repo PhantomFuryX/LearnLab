@@ -57,13 +57,13 @@ async def test_integration_planner_toolcalls(monkeypatch):
     o.advanced = True
     o._graph = None  # Force linear execution for testing
 
-    async def fake_generate(self, prompt, *args, **kwargs):
+    async def fake_generate(prompt, *args, **kwargs):
         if "integration" in prompt.lower() and "plan" in prompt.lower():
              plan = {"actions": [{"type": "web_fetch", "args": {"url": "https://example.com"}}]}
              return {"choices": [{"text": json.dumps(plan)}]}
         return {"choices": [{"text": "Summary: fetched"}]}
 
-    monkeypatch.setattr(type(o.llm), "generate", fake_generate, raising=False)
+    monkeypatch.setattr(o.llm, "generate", fake_generate, raising=False)
 
     def fake_get(name: str):
         return {"web_fetch": DummyWebFetch, "n8n": DummyN8N}.get(name)

@@ -28,10 +28,9 @@ def test_ingest_fetch_headers_and_trafilatura(monkeypatch):
     monkeypatch.setattr(WebFetchTool, 'run', fake_run, raising=True)
 
     # Mock rag_service.ingest_texts to avoid chroma dependency
-    from backend.services.rag_service import RAGService
-    rag_service = RAGService()
-    monkeypatch.setattr(rag_service, 'ingest_texts', lambda namespace, texts, metadatas=None, ids=None, chunk_size=None, chunk_overlap=None, mode=None: {"namespace": namespace, "count": len(texts)})
-    monkeypatch.setattr(rag_service, 'registry', None)
+    import backend.routers.knowledge as knowledge_mod
+    monkeypatch.setattr(knowledge_mod.rag_service, 'ingest_texts', lambda namespace, texts, metadatas=None, ids=None, chunk_size=None, chunk_overlap=None, mode=None: {"namespace": namespace, "count": len(texts)})
+    monkeypatch.setattr(knowledge_mod.rag_service, 'registry', None)
 
     payload = {
         "namespace": "fetch-ns",
