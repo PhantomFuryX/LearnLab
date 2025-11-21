@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: learnlab-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: learnlab-api }
+  template:
+    metadata:
+      labels: { app: learnlab-api }
+    spec:
+      containers:
+        - name: api
+          image: yourrepo/learnlab-api:latest
+          ports: [{ containerPort: 8000 }]
+          envFrom:
+            - configMapRef: { name: learnlab-config }
+            - secretRef: { name: learnlab-secrets }
+          readinessProbe:
+            httpGet: { path: /readyz, port: 8000 }
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /healthz, port: 8000 }
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: learnlab-api
+spec:
+  selector: { app: learnlab-api }
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000

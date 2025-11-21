@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: learnlab-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: learnlab-worker }
+  template:
+    metadata:
+      labels: { app: learnlab-worker }
+    spec:
+      containers:
+        - name: worker
+          image: yourrepo/learnlab-api:latest
+          command: ["python","-m","backend.worker"]
+          envFrom:
+            - configMapRef: { name: learnlab-config }
+            - secretRef: { name: learnlab-secrets }

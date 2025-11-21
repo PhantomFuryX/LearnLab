@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: learnlab-config
+  labels:
+    app.kubernetes.io/name: learnlab
+    app.kubernetes.io/instance: {{ .Release.Name }}
+data:
+  TRACING_ENABLED: {{ .Values.env.TRACING_ENABLED | quote }}
+  OTEL_EXPORTER_OTLP_ENDPOINT: {{ .Values.env.OTEL_EXPORTER_OTLP_ENDPOINT | quote }}
+  AUTH_REQUIRED: {{ .Values.env.AUTH_REQUIRED | quote }}
+  RATE_LIMIT_RPM: {{ .Values.env.RATE_LIMIT_RPM | quote }}

@@ -1,0 +1,2 @@
+This is a small sample text file used for ingestion tests.
+It contains a few lines of text to be chunked and embedded.

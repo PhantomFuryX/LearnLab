@@ -1,0 +1,64 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self';" />
+  <title>LearnLab - Chat</title>
+  <style>
+    body { font-family: sans-serif; margin: 1rem; }
+    nav a { margin-right: 1rem; }
+    #out { white-space: pre-wrap; border: 1px solid #ddd; padding: 0.5rem; min-height: 10rem; }
+    #steps, #cits { font-size: 0.9em; color: #555; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="./index.html">Chat</a>
+    <a href="./ingest.html">Ingestion</a>
+    <a href="./namespaces.html">Namespaces</a>
+    <a href="./jobs.html">Jobs</a>
+  </nav>
+  <h1>LearnLab Chat</h1>
+  <div>
+    <label>Namespace <input id="ns" value="default" /></label>
+    <label>k <input id="k" type="number" value="4" style="width:4rem" /></label>
+  </div>
+  <div>
+    <textarea id="prompt" rows="4" cols="80" placeholder="Ask something..."></textarea>
+  </div>
+  <button id="ask">Ask (stream)</button>
+  <button id="ask_final">Ask (final)</button>
+  <h3>Answer</h3>
+  <div id="out"></div>
+  <h3>Steps</h3>
+  <div id="steps"></div>
+  <h3>Citations</h3>
+  <ul id="cits"></ul>
+  <script type="module">
+    import { chatAskStream, chatAsk } from '../api_client.js';
+    const out = document.getElementById('out');
+    const steps = document.getElementById('steps');
+    const cits = document.getElementById('cits');
+    function payload(){ return { prompt: document.getElementById('prompt').value, namespace: document.getElementById('ns').value, k: Number(document.getElementById('k').value)||4 }; }
+    function renderCitations(list){ cits.innerHTML=''; (list||[]).forEach(c=>{ const li=document.createElement('li'); const m=c.metadata||{}; const url=m.blob_uri||m.source||c.source; const a=document.createElement('a'); a.href=url||'#'; a.textContent=url||c.source||'source'; a.target='_blank'; li.appendChild(a); cits.appendChild(li); }); }
+    document.getElementById('ask').onclick = () => {
+      out.textContent = ''; steps.textContent=''; cits.innerHTML='';
+      chatAskStream(payload(),
+        (s)=> { steps.textContent += `\n- ${JSON.stringify(s)}`; },
+        (tok)=> { out.textContent += tok; },
+        ()=> { steps.textContent += '\n[done]'; },
+        (err)=> { steps.textContent += `\n[error] ${err}`; }
+      );
+    };
+    document.getElementById('ask_final').onclick = async () => {
+      out.textContent = '...'; steps.textContent=''; cits.innerHTML='';
+      try{
+        const res = await chatAsk(payload());
+        out.textContent = res.answer || '';
+        (res.steps||[]).forEach(s=> steps.textContent += `\n- ${JSON.stringify(s)}`);
+        renderCitations(res.citations||[]);
+      }catch(e){ out.textContent = 'ERR '+e; }
+    };
+  </script>
+</body>
+</html>

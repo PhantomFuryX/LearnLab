@@ -1,0 +1,44 @@
+image:
+  repository: yourrepo/learnlab-api
+  tag: latest
+  pullPolicy: IfNotPresent
+
+api:
+  replicas: 2
+  service:
+    type: ClusterIP
+    port: 80
+  ingress:
+    enabled: true
+    className: nginx
+    host: learnlab.local
+    tls:
+      enabled: true
+      secretName: learnlab-tls
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+      nginx.ingress.kubernetes.io/limit-rps: "10"
+      nginx.ingress.kubernetes.io/server-snippet: |
+        add_header X-Content-Type-Options nosniff;
+        add_header X-Frame-Options DENY;
+        add_header Referrer-Policy strict-origin-when-cross-origin;
+        add_header Permissions-Policy "geolocation=(), microphone=(), camera=()";
+        add_header Content-Security-Policy "default-src 'self'; img-src 'self' data:; connect-src 'self' https:; script-src 'self'; style-src 'self' 'unsafe-inline';" always;
+
+env:
+  TRACING_ENABLED: "1"
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318/v1/traces
+  AUTH_REQUIRED: "1"
+  RATE_LIMIT_RPM: "120"
+
+redis:
+  enabled: true
+  image: redis:7-alpine
+
+worker:
+  replicas: 1
+
+otelCollector:
+  enabled: true

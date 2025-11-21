@@ -1,0 +1,80 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self';" />
+  <title>LearnLab - Ingestion</title>
+  <style> body { font-family: sans-serif; margin: 1rem; } pre { white-space: pre-wrap; } nav a{margin-right:1rem;} </style>
+</head>
+<body>
+  <nav>
+    <a href="./index.html">Chat</a>
+    <a href="./ingest.html">Ingestion</a>
+    <a href="./namespaces.html">Namespaces</a>
+    <a href="./jobs.html">Jobs</a>
+  </nav>
+  <h1>Ingestion</h1>
+  <div>
+    <label>Namespace <input id="ns" value="default" /></label>
+  </div>
+  <h3>Ingest URLs</h3>
+  <textarea id="urls" rows="4" cols="80" placeholder="https://example.com\nhttps://example.com/page"></textarea>
+  <button id="btn_urls">Ingest URLs</button>
+
+  <h3>Ingest via Fetch (browser UA, robots)</h3>
+  <textarea id="furls" rows="3" cols="80" placeholder="https://example.com"></textarea>
+  <button id="btn_fetch">Ingest Fetch</button>
+
+  <h3>Upload Files</h3>
+  <input type="file" id="files" multiple />
+  <button id="btn_files">Ingest Files</button>
+
+  <h3>Sitemap (Background)</h3>
+  <textarea id="sitemaps" rows="2" cols="80" placeholder="https://example.com/sitemap.xml"></textarea>
+  <button id="btn_sitemap">Start Sitemap Job</button>
+
+  <h3>Output</h3>
+  <pre id="out"></pre>
+  <script type="module">
+    import { ingestUrls, ingestFetch } from '../api_client.js';
+    const out = document.getElementById('out');
+    function ns() { return document.getElementById('ns').value; }
+    document.getElementById('btn_urls').onclick = async () => {
+      out.textContent = '...';
+      try {
+        const urls = document.getElementById('urls').value.split(/\n+/).map(x=>x.trim()).filter(Boolean);
+        const res = await ingestUrls(ns(), urls, { chunk_size: 1000, chunk_overlap: 100, use_trafilatura: true });
+        out.textContent = JSON.stringify(res, null, 2);
+      } catch (e) { out.textContent = 'ERR ' + e; }
+    };
+    document.getElementById('btn_fetch').onclick = async () => {
+      out.textContent = '...';
+      try {
+        const urls = document.getElementById('furls').value.split(/\n+/).map(x=>x.trim()).filter(Boolean);
+        const res = await ingestFetch(ns(), urls, { headers: { 'Accept-Language': 'en-US' } });
+        out.textContent = JSON.stringify(res, null, 2);
+      } catch (e) { out.textContent = 'ERR ' + e; }
+    };
+    document.getElementById('btn_files').onclick = async () => {
+      out.textContent = '...';
+      try{
+        const fd = new FormData();
+        fd.append('namespace', ns());
+        const fs = document.getElementById('files').files;
+        for (let i=0;i<fs.length;i++){ fd.append('files', fs[i], fs[i].name); }
+        const r = await fetch('/knowledge/ingest_files', { method: 'POST', body: fd });
+        out.textContent = JSON.stringify(await r.json(), null, 2);
+      }catch(e){ out.textContent = 'ERR '+e; }
+    };
+    document.getElementById('btn_sitemap').onclick = async () => {
+      out.textContent = '...';
+      try{
+        const urls = document.getElementById('sitemaps').value.split(/\n+/).map(x=>x.trim()).filter(Boolean);
+        const body = { namespace: ns(), sitemap_urls: urls };
+        const r = await fetch('/knowledge/ingest_sitemaps_bg', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        out.textContent = JSON.stringify(await r.json(), null, 2);
+      }catch(e){ out.textContent = 'ERR '+e; }
+    };
+  </script>
+</body>
+</html>
