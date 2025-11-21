@@ -10,6 +10,12 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    services:
+      mongo:
+        image: mongo:6
+        ports:
+          - 27017:27017
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -28,6 +34,7 @@ jobs:
       - name: Run tests
         env:
           OPENAI_API_KEY: dummy
+          MONGO_URI: mongodb://localhost:27017
           PYTHONWARNINGS: error
         run: |
           pytest -q --maxfail=1 -W error --cov=backend --cov=tests --cov-report=term-missing
