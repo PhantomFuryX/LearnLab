@@ -16,13 +16,14 @@ class DummyN8N(DummyTool):
     def run(self, action, data):
         return {"ok": True, "action": action, "data": data}
 
-@pytest.mark.asyncio
-async def test_automation_planner_toolcalls(monkeypatch):
-    from backend.core.tools import base as base_tools
+    @pytest.mark.asyncio
+    async def test_automation_planner_toolcalls(monkeypatch):
+        from backend.core.tools import base as base_tools
 
-    # Force advanced planner
-    o = Orchestrator()
-    o.advanced = True
+        # Force advanced planner
+        o = Orchestrator()
+        o.advanced = True
+        o._graph = None  # Force linear execution for testing
 
     # Monkeypatch LLM plan
     async def fake_generate(self, prompt, *args, **kwargs):
@@ -48,12 +49,13 @@ async def test_automation_planner_toolcalls(monkeypatch):
     assert "automation_report" in step_names
     assert s.get("result") == "Report: deployed"
 
-@pytest.mark.asyncio
-async def test_integration_planner_toolcalls(monkeypatch):
-    from backend.core.tools import base as base_tools
+    @pytest.mark.asyncio
+    async def test_integration_planner_toolcalls(monkeypatch):
+        from backend.core.tools import base as base_tools
 
-    o = Orchestrator()
-    o.advanced = True
+        o = Orchestrator()
+        o.advanced = True
+        o._graph = None  # Force linear execution for testing
 
     async def fake_generate(self, prompt, *args, **kwargs):
         if "integration" in prompt.lower() and "plan" in prompt.lower():
