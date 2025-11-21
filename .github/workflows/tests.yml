@@ -37,4 +37,4 @@ jobs:
           MONGO_URI: mongodb://localhost:27017
           PYTHONWARNINGS: error
         run: |
-          pytest -q --maxfail=1 -W error --cov=backend --cov=tests --cov-report=term-missing
+          pytest -q --maxfail=1 -W error --asyncio-mode=auto -o asyncio_default_fixture_loop_scope=function --cov=backend --cov=tests --cov-report=term-missing
