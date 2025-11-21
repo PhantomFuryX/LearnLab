@@ -93,6 +93,39 @@ class Orchestrator:
             state.update({"route": route, "steps": steps})
             return state
 
+    def _automation_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        with span("automation.node", {"session": state.get("session_id")}):
+            msg = state.get("message", "")
+            # Simple automation logic for non-advanced flow
+            plan = Plan(actions=[PlanAction(type="n8n", args={"action": "default", "data": {"message": msg}})])
+            
+            # Execute plan (simplified)
+            actions = []
+            steps = state.get("steps", [])
+            for act in plan.actions:
+                tool_cls = ToolRegistry.get(act.type)
+                if tool_cls:
+                    try:
+                        tool = tool_cls()
+                        out = tool.run(act.args.get("action"), act.args.get("data"))
+                        actions.append({"tool": act.type, "output": out})
+                        steps.append(Step(name="automation", detail="executed", output={"ok": True}).model_dump())
+                    except Exception as e:
+                        actions.append({"tool": act.type, "error": str(e)})
+                        steps.append(Step(name="automation", detail="error", output={"error": str(e)}).model_dump())
+            
+            state.update({"result": f"Executed {len(actions)} automation actions.", "actions": actions, "steps": steps})
+            return state
+
+    def _integration_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        with span("integration.node", {"session": state.get("session_id")}):
+            msg = state.get("message", "")
+            # Simple integration logic
+            steps = state.get("steps", [])
+            steps.append(Step(name="integration", detail="placeholder").model_dump())
+            state.update({"result": "Integration placeholder executed.", "steps": steps})
+            return state
+
     # Knowledge basic
     def _knowledge_retrieve(self, state: Dict[str, Any]) -> Dict[str, Any]:
         with span("knowledge.retrieve", {"ns": state.get("namespace"), "k": state.get("k")}):
