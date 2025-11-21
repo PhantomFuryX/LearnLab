@@ -31,6 +31,21 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pytest-cov python-multipart
 
+      - name: Wait for MongoDB
+        run: |
+          for i in {1..30}; do
+            if nc -z localhost 27017; then
+              echo "MongoDB is ready"
+              break
+            fi
+            echo "Waiting for MongoDB... ($i/30)"
+            sleep 2
+          done
+          if ! nc -z localhost 27017; then
+            echo "MongoDB failed to start"
+            exit 1
+          fi
+
       - name: Run tests
         env:
           OPENAI_API_KEY: dummy
