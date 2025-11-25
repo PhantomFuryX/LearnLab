@@ -4,7 +4,7 @@ MongoDB models for Planner + Calendar Phase 2
 
 from datetime import datetime
 from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from enum import Enum
 
 
@@ -177,8 +177,8 @@ class Schedule(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "user_id": "user_123",
                 "plan_id": "plan_123",
@@ -186,6 +186,7 @@ class Schedule(BaseModel):
                 "timezone": "America/New_York",
             }
         }
+    )
 
 
 # ============================================================================
@@ -215,8 +216,8 @@ class UserProgress(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "user_id": "user_123",
                 "plan_id": "plan_123",
@@ -224,6 +225,7 @@ class UserProgress(BaseModel):
                 "total_hours_spent": 0.0,
             }
         }
+    )
 
 
 # ============================================================================
@@ -238,11 +240,11 @@ class CreatePlanRequest(BaseModel):
     skill_level: SkillLevel = Field(default=SkillLevel.INTERMEDIATE)
     hours_per_week: int = Field(default=5, ge=1, le=40)
     duration_weeks: int = Field(default=4, ge=1, le=52)
-    topics: List[str] = Field(..., min_items=1, description="Topics to cover")
+    topics: List[str] = Field(..., min_length=1, description="Topics to cover")
     include_past_summaries: bool = Field(default=True)
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "goal": "Master agentic AI in 4 weeks",
                 "skill_level": "intermediate",
@@ -251,6 +253,7 @@ class CreatePlanRequest(BaseModel):
                 "topics": ["agent architectures", "tool use", "agentic loops"],
             }
         }
+    )
 
 
 class PlanResponse(BaseModel):
