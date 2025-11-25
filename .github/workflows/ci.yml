@@ -14,10 +14,16 @@ jobs:
         working-directory: ./backend
 
     services:
-      mongodb:
-        image: mongo:latest
+      mongo:
+        image: mongo:6.0
         ports:
           - 27017:27017
+        options: >-
+          --health-cmd="mongosh --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
       redis:
         image: redis:latest
         ports:
@@ -43,7 +49,7 @@ jobs:
         # We skip integration tests that might need real OpenAI keys if not mocked
         pytest ../tests -m "not integration" -v
       env:
-        MONGO_URI: mongodb://localhost:27017
+        MONGO_URI: mongodb://mongo:27017
         REDIS_URL: redis://localhost:6379/0
         JWT_SECRET: test_secret
         AUTH_REQUIRED: "false"
@@ -69,18 +75,4 @@ jobs:
       run: npm ci
 
     - name: Build
-      run: npm run build
-
-services:
-  mongo:
-    image: mongo:6.0
-    ports:
-      - 27017:27017
-    options: >-
-      --health-cmd="mongosh --eval 'db.runCommand({ ping: 1 })'"
-      --health-interval=10s
-      --health-timeout=5s
-      --health-retries=5
-
-env:
-  MONGO_URI: "mongodb://mongo:27017" 
+      run: npm run build 
