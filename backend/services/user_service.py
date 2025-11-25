@@ -10,9 +10,18 @@ class UserService:
         self.db = get_db()
         self.users = self.db["users"]
         self.sessions = self.db["sessions"]
-        self.users.create_index("email", unique=True)
-        self.sessions.create_index("user_id")
-        self.sessions.create_index("refresh_hash")
+        # Creating indexes can trigger network calls to MongoDB. Guard these
+        # so importing modules (e.g. during pytest collection) doesn't fail
+        # when a Mongo instance isn't available.
+        try:
+            self.users.create_index("email", unique=True)
+            self.sessions.create_index("user_id")
+            self.sessions.create_index("refresh_hash")
+        except Exception:
+            # Index creation failed or DB is unreachable at import time.
+            # Tests or the runtime environment can create/index later or
+            # mock DB interactions as needed.
+            pass
 
     def create_user(self, email: str, password: str) -> Dict[str, Any]:
         now = int(time.time())
